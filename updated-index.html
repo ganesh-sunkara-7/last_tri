@@ -1,0 +1,264 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF to Audio Converter</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Load PDF.js from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        // Configure PDF.js worker
+        if (typeof pdfjsLib !== 'undefined') {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 
+                'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <header class="header">
+            <div class="header-content">
+                <span class="header-icon">🎧</span>
+                <h1 class="header-title">PDF to Audio Converter</h1>
+                <p class="header-description">
+                    Convert your PDF documents to high-quality audio files with customizable voice and speed settings
+                </p>
+            </div>
+        </header>
+
+        <!-- Upload Section -->
+        <div class="card upload-card">
+            <div class="card__body">
+                <h3 class="settings-title">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    Upload PDF File
+                </h3>
+                
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-content">
+                        <div class="upload-icon">📄</div>
+                        <h4 class="upload-title">Drop your PDF file here</h4>
+                        <p class="upload-text">or <span class="upload-link" id="browseBtn">browse to choose a file</span></p>
+                        <p class="file-notice">Maximum file size: 50MB | Supported format: PDF</p>
+                    </div>
+                    <input type="file" id="fileInput" accept=".pdf" style="display: none;">
+                </div>
+                
+                <div class="file-info" id="fileInfo" style="display: none;">
+                    <div class="file-details">
+                        <div class="file-icon">📄</div>
+                        <div class="file-data">
+                            <div class="file-name" id="fileName">sample.pdf</div>
+                            <div class="file-size" id="fileSize">2.4 MB</div>
+                            <div class="file-pages" id="filePages">Pages: 10</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Section -->
+        <div class="card settings-card">
+            <div class="card__body">
+                <h3 class="settings-title">
+                    <i class="fas fa-cog"></i>
+                    Customization Options
+                </h3>
+                
+                <div class="settings-grid">
+                    <!-- Speed Control -->
+                    <div class="setting-group">
+                        <label class="setting-label">
+                            <i class="fas fa-tachometer-alt"></i>
+                            Speech Speed
+                        </label>
+                        <div class="speed-control">
+                            <input type="range" 
+                                   id="speedRange" 
+                                   class="speed-slider" 
+                                   min="50" 
+                                   max="400" 
+                                   value="200" 
+                                   step="10">
+                            <div class="speed-display">
+                                <span id="speedValue">200</span> words/minute
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Voice Selection -->
+                    <div class="setting-group">
+                        <label class="setting-label">
+                            <i class="fas fa-microphone"></i>
+                            Voice Gender
+                        </label>
+                        <div class="voice-options">
+                            <div class="radio-option">
+                                <input type="radio" id="voiceMale" name="voice" value="male" checked>
+                                <label for="voiceMale" class="radio-label">
+                                    <i class="fas fa-male"></i>
+                                    Male Voice
+                                </label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" id="voiceFemale" name="voice" value="female">
+                                <label for="voiceFemale" class="radio-label">
+                                    <i class="fas fa-female"></i>
+                                    Female Voice
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Page Range -->
+                    <div class="setting-group">
+                        <label class="setting-label">
+                            <i class="fas fa-file-alt"></i>
+                            Page Range
+                        </label>
+                        <div class="page-range">
+                            <div class="page-input">
+                                <label for="startPage">From page:</label>
+                                <input type="number" 
+                                       id="startPage" 
+                                       class="page-number" 
+                                       min="1" 
+                                       value="1">
+                            </div>
+                            <div class="page-input">
+                                <label for="endPage">To page:</label>
+                                <input type="number" 
+                                       id="endPage" 
+                                       class="page-number" 
+                                       min="1" 
+                                       value="1">
+                            </div>
+                        </div>
+                        <div class="page-info">
+                            Total pages: <span id="totalPages">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Convert Section -->
+        <div class="card convert-card">
+            <div class="card__body">
+                <button id="convertBtn" class="btn--convert" disabled>
+                    <i class="fas fa-magic"></i>
+                    Select PDF File First
+                </button>
+                
+                <!-- Progress Section -->
+                <div class="progress-section" id="progressSection" style="display: none;">
+                    <div class="progress-info">
+                        <div class="progress-text" id="progressText">Processing...</div>
+                        <div class="progress-time" id="progressTime">Estimated time: calculating...</div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                        <div class="progress-percentage" id="progressPercentage">0%</div>
+                    </div>
+                </div>
+
+                <!-- Download Section -->
+                <div class="download-section" id="downloadSection" style="display: none;">
+                    <div class="download-success">
+                        <div class="success-icon">✅</div>
+                        <h3>Conversion Completed!</h3>
+                        <p>Your PDF has been successfully processed and converted.</p>
+                        <a href="#" id="downloadBtn" class="btn--download">
+                            <i class="fas fa-download"></i>
+                            Download Text File
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instructions Section -->
+        <div class="card instructions-card">
+            <div class="card__body">
+                <h3 class="instructions-title">
+                    <i class="fas fa-info-circle"></i>
+                    How to Use
+                </h3>
+                
+                <ol class="instructions-list">
+                    <li>Upload your PDF file by dragging and dropping it into the upload area or clicking to browse</li>
+                    <li>Adjust the speech speed using the slider (50-400 words per minute)</li>
+                    <li>Select your preferred voice gender (male or female)</li>
+                    <li>Choose the page range you want to convert (or leave as default for entire document)</li>
+                    <li>Click 'Convert & Download' to start the conversion process</li>
+                    <li>Wait for the conversion to complete and download your text file</li>
+                    <li>Use the "Play Speech" button to listen to the audio in your browser</li>
+                </ol>
+
+                <div class="features-grid">
+                    <div class="feature-item">
+                        <i class="fas fa-volume-up"></i>
+                        <span>Real-time text-to-speech conversion</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-sliders-h"></i>
+                        <span>Customizable speech speed</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-users"></i>
+                        <span>Male and female voice options</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-file-pdf"></i>
+                        <span>Text extraction from PDF</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical Information -->
+        <div class="card code-card">
+            <div class="card__body">
+                <h3 class="code-title">
+                    <i class="fab fa-python"></i>
+                    Technical Implementation
+                </h3>
+                <p class="code-description">
+                    This web application uses modern browser APIs for PDF processing and speech synthesis. 
+                    The frontend utilizes <code>PDF.js</code> for client-side PDF text extraction and the 
+                    <code>Web Speech API</code> for text-to-speech conversion. No server-side processing is required.
+                </p>
+                <div class="features-grid">
+                    <div class="feature-item">
+                        <i class="fas fa-globe"></i>
+                        <span>Client-side processing</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Privacy-focused (no uploads)</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-mobile-alt"></i>
+                        <span>Works on all modern browsers</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-code"></i>
+                        <span>Open source implementation</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>© 2025 PDF to Audio Converter. Built with modern web technologies and client-side processing.</p>
+        </footer>
+    </div>
+
+    <!-- Load the main application script -->
+    <script src="app.js"></script>
+</body>
+</html>
